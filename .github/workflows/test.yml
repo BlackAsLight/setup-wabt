@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 jobs:
   test:
-    runs-on: ${{ maxtrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
