@@ -39,7 +39,7 @@ runs:
         --json assets -q ".assets[].name | select(test(\"$ASSET\"))")
         echo "Asset: $ASSET"
 
-        TEMP=mktemp -d
+        TEMP=$(mktemp -d)
         gh release download $VERSION \
         --repo WebAssembly/wabt \
         --pattern $ASSET \
