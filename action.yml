@@ -39,11 +39,11 @@ runs:
         --json assets -q ".assets[].name | select(test(\"$ASSET\"))")
         echo "Asset: $ASSET"
 
-        mkdir wabt
+        TEMP=mktemp -d
         gh release download $VERSION \
         --repo WebAssembly/wabt \
         --pattern $ASSET \
         -O - \
-        | tar -xzC wabt --strip-components=1
-        ls wabt/bin
-        echo "$(pwd -W 2>/dev/null || pwd)/wabt/bin" >> $GITHUB_PATH
+        | tar -xzC $TEMP --strip-components=1
+        ls $TEMP/bin
+        echo "$TEMP/bin" >> $GITHUB_PATH
