@@ -17,10 +17,9 @@ runs:
 
         VERSION="${{ inputs.version }}"
         if [ "$VERSION" = 'latest' ]; then
-          VERSION=$(curl -sSfL \
-          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-          "https://api.github.com/repos/WebAssembly/wabt/releases/latest" \
-          | jq -r '.tag_name')
+          VERSION=$(gh release view \
+          --repo WebAssembly/wabt \
+          --json tagName -q .tagName)
         fi
         echo "Version: $VERSION"
 
@@ -35,16 +34,16 @@ runs:
         fi
         echo "Test: $ASSET"
 
-        ASSET=$(curl -sSfL \
-        -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-        "https://api.github.com/repos/WebAssembly/wabt/releases/tags/$VERSION" \
-        | jq -r ".assets[].name | select(test(\"$ASSET\"))")
+        ASSET=$(gh release view $VERSION \
+        --repo WebAssembly/wabt \
+        --json assets -q ".assets[].name | select(test(\"$ASSET\"))")
         echo "Asset: $ASSET"
 
         mkdir wabt
-        curl -sSfL \
-        -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-        "https://github.com/WebAssembly/wabt/releases/download/$VERSION/$ASSET" \
+        gh release download $VERSION \
+        --repo WebAssembly/wabt \
+        --pattern $ASSET
+        -O - \
         | tar -xzC wabt --strip-components=1
         ls wabt/bin
         echo "$(pwd -W 2>/dev/null || pwd)/wabt/bin" >> $GITHUB_PATH
