@@ -31,4 +31,4 @@ runs:
 
         mkdir wabt
         curl -sL "https://github.com/WebAssembly/wabt/releases/download/$VERSION/$ASSET" | tar -xzC wabt --strip-components=1
-        echo "$PWD/wabt/bin" >> $GITHUB_PATH
+        echo "$(pwd -W 2>/dev/null || pwd)/wabt/bin" >> $GITHUB_PATH
