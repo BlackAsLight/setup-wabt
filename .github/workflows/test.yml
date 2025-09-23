@@ -14,5 +14,7 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v3
-      - uses: ./
-      - run: wasm2wat --version
+      - name: Test Action
+        uses: ./
+      - name: Version
+        run: wasm2wat --version
