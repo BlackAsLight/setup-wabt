@@ -46,4 +46,4 @@ runs:
         -O - \
         | tar -xzC $TEMP --strip-components=1
         ls $TEMP/bin
-        echo "$TEMP/bin" >> $GITHUB_PATH
+        echo "$(cd "$TEMP/bin" && pwd -W 2>/dev/null || pwd)" >> $GITHUB_PATH
