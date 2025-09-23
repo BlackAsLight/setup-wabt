@@ -28,7 +28,7 @@ runs:
             exit 1
         fi
 
-        ASSET=$(curl -sL "https://api.github.com/repos/WebAssembly/wabt/releases/tags/$VERSION" | jq -r ".assets[].name | select(test($ASSET))")
+        ASSET=$(curl -sL "https://api.github.com/repos/WebAssembly/wabt/releases/tags/$VERSION" | jq -r ".assets[].name | select(test(\"$ASSET\"))")
 
         mkdir wabt
         curl -sL "https://github.com/WebAssembly/wabt/releases/download/$VERSION/$ASSET" | tar -xC wabt --strip-components=2 '*/bin/*'
