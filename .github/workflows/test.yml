@@ -14,5 +14,5 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v3
-      - uses: ./.github/actions/my-action
+      - uses: ./action.yml
       - run: wasm2wat --version
