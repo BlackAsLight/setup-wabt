@@ -42,7 +42,7 @@ runs:
         mkdir wabt
         gh release download $VERSION \
         --repo WebAssembly/wabt \
-        --pattern $ASSET
+        --pattern $ASSET \
         -O - \
         | tar -xzC wabt --strip-components=1
         ls wabt/bin
