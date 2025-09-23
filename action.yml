@@ -1,5 +1,8 @@
 name: "Setup WABT"
 description: "Setup WebAssembly Binary Toolkit"
+branding:
+  icon: download
+  color: purple
 inputs:
   version:
     description: "Version to Install"
