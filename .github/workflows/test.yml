@@ -16,5 +16,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Test Action
         uses: ./
+        env:
+          GH_TOKEN: ${{ github.token }}
       - name: Version
         run: wasm2wat --version
