@@ -14,7 +14,7 @@ runs:
 
         VERSION="${{ inputs.version }}"
         if [ "$VERSION" = 'latest' ]; then
-          VERSION=$(curl -sL "https://api.github.com/repos/WebAssembly/wabt/releases/latest" | jq -r '.tag_name')
+          VERSION=$(curl -L "https://api.github.com/repos/WebAssembly/wabt/releases/latest" | jq -r '.tag_name')
         fi
         echo "Version: $VERSION"
 
@@ -29,10 +29,10 @@ runs:
         fi
         echo "Test: $ASSET"
 
-        ASSET=$(curl -sL "https://api.github.com/repos/WebAssembly/wabt/releases/tags/$VERSION" | jq -r ".assets[].name | select(test(\"$ASSET\"))")
+        ASSET=$(curl -L "https://api.github.com/repos/WebAssembly/wabt/releases/tags/$VERSION" | jq -r ".assets[].name | select(test(\"$ASSET\"))")
         echo "Asset: $ASSET"
 
         mkdir wabt
-        curl -sL "https://github.com/WebAssembly/wabt/releases/download/$VERSION/$ASSET" | tar -xzC wabt --strip-components=1
+        curl -L "https://github.com/WebAssembly/wabt/releases/download/$VERSION/$ASSET" | tar -xzC wabt --strip-components=1
         ls wabt/bin
         echo "$(pwd -W 2>/dev/null || pwd)/wabt/bin" >> $GITHUB_PATH
