@@ -14,36 +14,59 @@ runs:
       shell: bash
       run: |
         set -e
-
         VERSION="${{ inputs.version }}"
-        if [ "$VERSION" = 'latest' ]; then
-          VERSION=$(gh release view \
-          --repo WebAssembly/wabt \
-          --json tagName -q .tagName)
-        fi
-        echo "Version: $VERSION"
-
-        if [ "$RUNNER_OS" = 'Linux' ]; then
-          ASSET=".*ubuntu.*\\\\.tar\\\\.gz$"
-        elif [ "$RUNNER_OS" = 'macOS' ]; then
-          ASSET=".*macos.*\\\\.tar\\\\.gz$"
-        elif [ "$RUNNER_OS" = 'Windows' ]; then
-          ASSET=".*windows.*\\\\.tar\\\\.gz$"
-        else
-          exit 1
-        fi
-        echo "Test: $ASSET"
-
-        ASSET=$(gh release view $VERSION \
-        --repo WebAssembly/wabt \
-        --json assets -q ".assets[].name | select(test(\"$ASSET\"))")
-        echo "Asset: $ASSET"
-
         TEMP=$(mktemp -d)
-        gh release download $VERSION \
-        --repo WebAssembly/wabt \
-        --pattern $ASSET \
-        -O - \
-        | tar -xzC $TEMP --strip-components=1
+
+        if [ "$VERSION" = 'canary' ] && [ "$RUNNER_OS" != 'Windows' ]; then
+          echo "\e[36mCloning source to $TEMP/wabt\e[0m"
+          gh repo clone WebAssembly/wabt "$TEMP/wabt" -- --recurse-submodule
+
+          echo "\e[36mBuilding...\e[0m"
+          cmake -S "$TEMP/wabt" -B "$TEMP/wabt/build"
+          cmake --build "$TEMP/wabt/build"
+
+          echo "\e[36mCleaning up...\e[0m"
+          mv "$TEMP/wabt/bin" "$TEMP/bin"
+          rm -rf "$TEMP/wabt"
+        else
+          if [ "$VERSION" = 'latest' ] || [ "$VERSION" = 'canary' ]; then
+            VERSION=$(gh release view \
+            --repo WebAssembly/wabt \
+            --json tagName -q .tagName)
+            echo "\e[36mLatest Release: $VERSION\e[0m"
+          else
+            echo "\e[36mVersion Provided: $VERSION\e[0m"
+          fi
+
+          if [ "$RUNNER_OS" = 'Linux' ]; then
+            ASSET=".*ubuntu.*\\\\.tar\\\\.gz$"
+          elif [ "$RUNNER_OS" = 'macOS' ]; then
+            ASSET=".*macos.*\\\\.tar\\\\.gz$"
+          elif [ "$RUNNER_OS" = 'Windows' ]; then
+            ASSET=".*windows.*\\\\.tar\\\\.gz$"
+          else
+            exit 1
+          fi
+
+          echo "\e[36mMatch Pattern: $ASSET\e[0m"
+          ASSET=$(gh release view $VERSION \
+          --repo WebAssembly/wabt \
+          --json assets -q ".assets[].name | select(test(\"$ASSET\"))")
+
+          echo "\e[36mDownloading and Extracting $ASSET to $TEMP/wabt\e[0m"
+          gh release download $VERSION \
+          --repo WebAssembly/wabt \
+          --pattern $ASSET \
+          -O - \
+          | tar -xzC $TEMP/wabt --strip-components=1
+
+          echo "\e[36mCleaning Up...\e[0m"
+          mv "$TEMP/wabt/bin" "$TEMP/bin"
+          rm -rf "$TEMP/wabt"
+        fi
+
+        echo "\e[36mls $TEMP/bin\e[0m"
         ls $TEMP/bin
+
+        echo "\e[36mAdding $TEMP/bin to PATH\e[0m"
         echo "$(cd "$TEMP/bin" && pwd -W 2>/dev/null || pwd)" >> $GITHUB_PATH
