@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        v: [canary, latest, 1.0.37]
+        v: [canary, latest, 1.0.36]
     steps:
       - uses: actions/checkout@v3
       - name: Test Action
@@ -21,5 +21,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         with:
           version: ${{ matrix.v }}
+          macos: ".*macos.*14.*\\\\.tar\\\\.gz$"
       - name: Validate Success
         run: wasm2wat --version

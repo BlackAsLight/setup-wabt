@@ -7,6 +7,15 @@ inputs:
   version:
     description: "Version to Install"
     default: "latest"
+  ubuntu:
+    description: "Pattern to match for Ubuntu Release"
+    default: ".*ubuntu.*\\\\.tar\\\\.gz$"
+  macos:
+    description: "Pattern to match for MacOS Release"
+    default: ".*macos.*\\\\.tar\\\\.gz$"
+  windows:
+    description: "Pattern to match for Windows Release"
+    default: ".*windows.*\\\\.tar\\\\.gz$"
 runs:
   using: "composite"
   steps:
@@ -39,11 +48,11 @@ runs:
           fi
 
           if [ "$RUNNER_OS" = 'Linux' ]; then
-            ASSET=".*ubuntu.*\\\\.tar\\\\.gz$"
+            ASSET="${{ inputs.ubuntu }}"
           elif [ "$RUNNER_OS" = 'macOS' ]; then
-            ASSET=".*macos.*\\\\.tar\\\\.gz$"
+            ASSET="${{ inputs.macos }}"
           elif [ "$RUNNER_OS" = 'Windows' ]; then
-            ASSET=".*windows.*\\\\.tar\\\\.gz$"
+            ASSET="${{ inputs.windows }}"
           else
             exit 1
           fi
