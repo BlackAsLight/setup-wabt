@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        v: [canary, latest, 1.0.36]
+        v: [canary, latest, 1.0.37]
     steps:
       - uses: actions/checkout@v3
       - name: Test Action
