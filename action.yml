@@ -52,7 +52,7 @@ runs:
           ASSET=$(gh release view $VERSION \
           --repo WebAssembly/wabt \
           --json assets -q ".assets[].name | select(test(\"$ASSET\"))")
-          read -r $ASSET <<< "$ASSET"
+          read -r ASSET <<< "$ASSET"
 
           echo -e "\033[36mDownloading and Extracting $ASSET to $TEMP/wabt\033[0m"
           mkdir "$TEMP/wabt"
