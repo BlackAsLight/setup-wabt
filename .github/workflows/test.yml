@@ -21,6 +21,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         with:
           version: ${{ matrix.v }}
-          macos: ".*macos.*14.*\\\\.tar\\\\.gz$"
+          macos: ".*macos.*14.*\\\\\\.tar\\\\\\.gz$"
       - name: Validate Success
         run: wasm2wat --version

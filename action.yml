@@ -9,13 +9,13 @@ inputs:
     default: "latest"
   ubuntu:
     description: "Pattern to match for Ubuntu Release"
-    default: ".*ubuntu.*\\\\.tar\\\\.gz$"
+    default: ".*ubuntu.*\\\\\\.tar\\\\\\.gz$"
   macos:
     description: "Pattern to match for MacOS Release"
-    default: ".*macos.*\\\\.tar\\\\.gz$"
+    default: ".*macos.*\\\\\\.tar\\\\\\.gz$"
   windows:
     description: "Pattern to match for Windows Release"
-    default: ".*windows.*\\\\.tar\\\\.gz$"
+    default: ".*windows.*\\\\\\.tar\\\\\\.gz$"
 runs:
   using: "composite"
   steps:
