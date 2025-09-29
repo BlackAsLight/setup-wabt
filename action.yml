@@ -18,14 +18,14 @@ runs:
         TEMP=$(mktemp -d)
 
         if [ "$VERSION" = 'canary' ] && [ "$RUNNER_OS" != 'Windows' ]; then
-          echo "\033[36mCloning source to $TEMP/wabt\033[0m"
+          echo -e "\033[36mCloning source to $TEMP/wabt\033[0m"
           gh repo clone WebAssembly/wabt "$TEMP/wabt" -- --recurse-submodule
 
-          echo "\033[36mBuilding...\033[0m"
+          echo -e "\033[36mBuilding...\033[0m"
           cmake -S "$TEMP/wabt" -B "$TEMP/wabt/build"
           cmake --build "$TEMP/wabt/build"
 
-          echo "\033[36mCleaning up...\033[0m"
+          echo -e "\033[36mCleaning up...\033[0m"
           mv "$TEMP/wabt/bin" "$TEMP/bin"
           rm -rf "$TEMP/wabt"
         else
@@ -33,9 +33,9 @@ runs:
             VERSION=$(gh release view \
             --repo WebAssembly/wabt \
             --json tagName -q .tagName)
-            echo "\033[36mLatest Release: $VERSION\033[0m"
+            echo -e "\033[36mLatest Release: $VERSION\033[0m"
           else
-            echo "\033[36mVersion Provided: $VERSION\033[0m"
+            echo -e "\033[36mVersion Provided: $VERSION\033[0m"
           fi
 
           if [ "$RUNNER_OS" = 'Linux' ]; then
@@ -48,12 +48,13 @@ runs:
             exit 1
           fi
 
-          echo "\033[36mMatch Pattern: $ASSET\033[0m"
+          echo -e "\033[36mMatch Pattern: $ASSET\033[0m"
           ASSET=$(gh release view $VERSION \
           --repo WebAssembly/wabt \
           --json assets -q ".assets[].name | select(test(\"$ASSET\"))")
+          read -r $ASSET <<< "$ASSET"
 
-          echo "\033[36mDownloading and Extracting $ASSET to $TEMP/wabt\033[0m"
+          echo -e "\033[36mDownloading and Extracting $ASSET to $TEMP/wabt\033[0m"
           mkdir "$TEMP/wabt"
           gh release download $VERSION \
           --repo WebAssembly/wabt \
@@ -61,13 +62,13 @@ runs:
           -O - \
           | tar -xzC $TEMP/wabt --strip-components=1
 
-          echo "\033[36mCleaning Up...\033[0m"
+          echo -e "\033[36mCleaning Up...\033[0m"
           mv "$TEMP/wabt/bin" "$TEMP/bin"
           rm -rf "$TEMP/wabt"
         fi
 
-        echo "\033[36mls $TEMP/bin\033[0m"
+        echo -e "\033[36mls $TEMP/bin\033[0m"
         ls $TEMP/bin
 
-        echo "\033[36mAdding $TEMP/bin to PATH\033[0m"
-        echo "$(cd "$TEMP/bin" && pwd -W 2>/dev/null || pwd)" >> $GITHUB_PATH
+        echo -e "\033[36mAdding $TEMP/bin to PATH\033[0m"
+        echo -e "$(cd "$TEMP/bin" && pwd -W 2>/dev/null || pwd)" >> $GITHUB_PATH
