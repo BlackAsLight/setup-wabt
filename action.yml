@@ -68,7 +68,7 @@ runs:
           fi
 
           echo -e "\033[36mCleaning Up...\033[0m"
-          mv "$TEMP/wabt/bin" "$TEMP/bin"
+          mv "$TEMP/wabt/*" "$TEMP/"
           rm -rf "$TEMP/wabt"
         fi
 
