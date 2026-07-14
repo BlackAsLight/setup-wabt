@@ -45,7 +45,7 @@ runs:
           for ASSET in $(gh release view $VERSION \
             --repo WebAssembly/wabt \
             --json assets \
-            -q '.assets[].name | select(test"\\.tar\\.gz$")');
+            -q '.assets[].name | select(test("\\.tar\\.gz$"))');
           do
             echo "\033[36mFound: $ASSET\033[0m"
             mkdir "$TEMP/wabt"
