@@ -25,12 +25,15 @@ runs:
           cmake \
             -S "$TEMP/wabt" \
             -B "$TEMP/wabt/build" \
-            -DCMAKE_INSTALL_PREFIX="$TEMP/bin" \
+            -DCMAKE_INSTALL_PREFIX="$TEMP" \
             -DCMAKE_BUILD_TYPE=RELEASE
           cmake --build "$TEMP/wabt/build" --config RELEASE --target install
 
           echo -e "\033[36mCleaning Up...\033[0m"
           rm -rf "$TEMP/wabt"
+          rm -rf "$TEMP/include"
+          rm -rf "$TEMP/lib"
+          rm -rf "$TEMP/share"
         else
           if [ "$VERSION" = 'latest' ]; then
             echo -e "\033[36mFetching Versions...\033[0m"
