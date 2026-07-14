@@ -31,15 +31,13 @@ runs:
 
           echo -e "\033[36mCleaning Up...\033[0m"
           rm -rf "$TEMP/wabt"
-          rm -rf "$TEMP/include"
-          rm -rf "$TEMP/lib"
-          rm -rf "$TEMP/share"
         else
           if [ "$VERSION" = 'latest' ]; then
             echo -e "\033[36mFetching Versions...\033[0m"
             VERSION=$(gh release view \
               --repo WebAssembly/wabt \
-              --json tagName -q .tagName)
+              --json tagName \
+              -q .tagName)
             echo -e "\033[36mLatest Version: $VERSION\033[0m"
           else
             echo -e "\033[36mProvided Version: $VERSION\033[0m"
@@ -61,21 +59,21 @@ runs:
             if "$TEMP/wabt/bin/wat2wasm" --version >/dev/null 2>&1; then
               break
             fi
-            echo "\033[36mBad Find\033[0m"
+            echo -e "\033[36mBad Find\033[0m"
             rm -rf "$TEMP/wabt"
           done
           if ! "$TEMP/wabt/bin/wat2wasm" --version >/dev/null 2>&1; then
-            echo "\033[36mNo Assets Work!\033[0m"
+            echo -e "\033[36mNo Assets Work!\033[0m"
             exit 1
           fi
 
-          echo "\033[36mCleaning Up...\033[0m"
+          echo -e "\033[36mCleaning Up...\033[0m"
           mv "$TEMP/wabt/bin" "$TEMP/bin"
           rm -rf "$TEMP/wabt"
         fi
 
         echo -e "\033[36mls $TEMP/bin\033[0m"
-        ls $TEMP/bin
+        ls "$TEMP/bin"
 
         echo -e "\033[36mAdding $TEMP/bin to PATH\033[0m"
         echo -e "$(cd "$TEMP/bin" && pwd -W 2>/dev/null || pwd)" >> $GITHUB_PATH
