@@ -7,15 +7,6 @@ inputs:
   version:
     description: "Version to Install"
     default: "latest"
-  ubuntu:
-    description: "Pattern to match for Ubuntu Release"
-    default: ".*ubuntu.*\\\\\\.tar\\\\\\.gz$"
-  macos:
-    description: "Pattern to match for MacOS Release"
-    default: ".*macos.*\\\\\\.tar\\\\\\.gz$"
-  windows:
-    description: "Pattern to match for Windows Release"
-    default: ".*windows.*\\\\\\.tar\\\\\\.gz$"
 runs:
   using: "composite"
   steps:
@@ -26,55 +17,56 @@ runs:
         VERSION="${{ inputs.version }}"
         TEMP=$(mktemp -d)
 
-        if [ "$VERSION" = 'canary' ] && [ "$RUNNER_OS" != 'Windows' ]; then
-          echo -e "\033[36mCloning source to $TEMP/wabt\033[0m"
-          gh repo clone WebAssembly/wabt "$TEMP/wabt" -- --recurse-submodule
+        if [ "$VERSION" = 'canary' ]; then
+          echo -e "\033[36mCloning Source to $TEMP/wabt\033[0m"
+          gh repo clone WebAssembly/wabt "$TEMP/wabt" -- --recurse-submodules
 
           echo -e "\033[36mBuilding...\033[0m"
-          cmake -S "$TEMP/wabt" -B "$TEMP/wabt/build"
-          cmake --build "$TEMP/wabt/build"
+          cmake \
+            -S "$TEMP/wabt" \
+            -B "$TEMP/wabt/build" \
+            -DCMAKE_INSTALL_PREFIX="$TEMP/bin" \
+            -DCMAKE_BUILD_TYPE=RELEASE
+          cmake --build "$TEMP/wabt/build" --config RELEASE --target install
 
-          echo -e "\033[36mCleaning up...\033[0m"
-          mv "$TEMP/wabt/bin" "$TEMP/bin"
+          echo -e "\033[36mCleaning Up...\033[0m"
           rm -rf "$TEMP/wabt"
         else
-          if [ "$VERSION" = 'latest' ] || [ "$VERSION" = 'canary' ]; then
+          if [ "$VERSION" = 'latest' ]; then
+            echo -e "\033[36mFetching Versions...\033[0m"
             VERSION=$(gh release view \
-            --repo WebAssembly/wabt \
-            --json tagName -q .tagName)
-            echo -e "\033[36mLatest Release: $VERSION\033[0m"
+              --repo WebAssembly/wabt \
+              --json tagName -q .tagName)
+            echo -e "\033[36mLatest Version: $VERSION\033[0m"
           else
-            echo -e "\033[36mVersion Provided: $VERSION\033[0m"
+            echo -e "\033[36mProvided Version: $VERSION\033[0m"
           fi
 
-          if [ "$RUNNER_OS" = 'Linux' ]; then
-            ASSET="${{ inputs.ubuntu }}"
-          elif [ "$RUNNER_OS" = 'macOS' ]; then
-            ASSET="${{ inputs.macos }}"
-          elif [ "$RUNNER_OS" = 'Windows' ]; then
-            ASSET="${{ inputs.windows }}"
-          else
+          for ASSET in $(gh release view $VERSION \
+            --repo WebAssembly/wabt \
+            --json assets \
+            -q '.assets[].name | select(test"\\.tar\\.gz$")');
+          do
+            echo "\033[36mFound: $ASSET\033[0m"
+            mkdir "$TEMP/wabt"
+            gh release download $VERSION \
+              --repo WebAssembly/wabt \
+              --pattern $ASSET
+              -O - \
+              | tar -xzC $TEMP/wabt --strip-components=1
+
+            if "$TEMP/wabt/bin/wat2wasm" --version >/dev/null 2>&1; then
+              break
+            fi
+            echo "\033[36mBad Find\033[0m"
+            rm -rf "$TEMP/wabt"
+          done
+          if ! "$TEMP/wabt/bin/wat2wasm" --version >/dev/null 2>&1; then
+            echo "\033[36mNo Assets Work!\033[0m"
             exit 1
           fi
 
-          echo -e "\033[36mMatch Pattern: $ASSET\033[0m"
-          ASSET=$(gh release view $VERSION \
-          --repo WebAssembly/wabt \
-          --json assets -q ".assets[].name | select(test(\"$ASSET\"))")
-          echo -e "\033[36mFound:\033[0m"
-          echo "$ASSET"
-          read -r ASSET <<< "$ASSET"
-          echo -e "\033[36mUsing: $ASSET\033[0m"
-
-          echo -e "\033[36mDownloading and Extracting $ASSET to $TEMP/wabt\033[0m"
-          mkdir "$TEMP/wabt"
-          gh release download $VERSION \
-          --repo WebAssembly/wabt \
-          --pattern $ASSET \
-          -O - \
-          | tar -xzC $TEMP/wabt --strip-components=1
-
-          echo -e "\033[36mCleaning Up...\033[0m"
+          echo "\033[36mCleaning Up...\033[0m"
           mv "$TEMP/wabt/bin" "$TEMP/bin"
           rm -rf "$TEMP/wabt"
         fi
