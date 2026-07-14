@@ -47,11 +47,11 @@ runs:
             --json assets \
             -q '.assets[].name | select(test("\\.tar\\.gz$"))');
           do
-            echo "\033[36mFound: $ASSET\033[0m"
+            echo -e "\033[36mFound: $ASSET\033[0m"
             mkdir "$TEMP/wabt"
             gh release download $VERSION \
               --repo WebAssembly/wabt \
-              --pattern $ASSET
+              --pattern $ASSET \
               -O - \
               | tar -xzC $TEMP/wabt --strip-components=1
 
