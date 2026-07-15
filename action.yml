@@ -29,16 +29,20 @@ runs:
         if [ "$VERSION" = 'canary' ]; then
           SHA=$(gh api repos/WebAssembly/wabt/commits --jq '.[0].sha')
           echo "sha=$SHA" >> "$GITHUB_OUTPUT"
-          echo "key=${{ runner.os }}-$SHA" >> "$GITHUB_OUTPUT"
+          echo -e "\033[36mCanary SHA: $SHA\033[0m"
+          echo "key=wabt-${{ runner.os }}-$SHA" >> "$GITHUB_OUTPUT"
         else
           if [ "$VERSION" = 'latest' ]; then
             VERSION=$(gh api repos/WebAssembly/wabt/releases/latest \
               --jq '.name')
+            echo -e "\033[36mLatest Version: $VERSION\033[0m"
+          else
+            echo -e "\033[36mProvided Version: $VERSION\033[0m"
           fi
-          echo "key=${{ runner.os }}-$VERSION" >> "$GITHUB_OUTPUT"
+          echo "key=wabt-${{ runner.os }}-$VERSION" >> "$GITHUB_OUTPUT"
         fi
         echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-    - name: Load Cache
+    - name: Restore Cache
       id: cache
       if: inputs.cache == 'true'
       uses: actions/cache/restore@v4
@@ -53,9 +57,11 @@ runs:
         VERSION=${{ steps.source.outputs.version }}
 
         if [ "$VERSION" = 'canary' ]; then
+          echo -e "\033[36mCloning Repo...\033[0m"
           gh repo clone WebAssembly/wabt ~/.wabt/temp -- --recurse-submodules
           git -C ~/.wabt/temp checkout ${{ steps.source.outputs.sha }}
 
+          echo -e "\033[36mBuilding...\033[0m"
           cmake \
             -S ~/.wabt/temp \
             -B ~/.wabt/temp/build \
@@ -63,12 +69,15 @@ runs:
             -DCMAKE_BUILD_TYPE=RELEASE
           cmake --build ~/.wabt/temp/build --config RELEASE --target install
 
+          echo -e "\033[36mCleaning Up...\033[0m"
           rm -rf ~/.wabt/temp
         else
+          echo -e "\033[36mFetching Assets...\033[0m"
           for ASSET in $(gh api repos/WebAssembly/wabt/releases/tags/$VERSION \
             --jq '.assets.[].name | select(test("\\.tar\\.gz$"))');
           do
             mkdir ~/.wabt
+            echo -e "\033[36mFound Asset: $ASSET\033[0m"
             gh release download $VERSION \
               --repo WebAssembly/wabt \
               --pattern "$ASSET" \
@@ -77,9 +86,11 @@ runs:
             if ~/.wabt/bin/wat2wasm --version >/dev/null 2>&1; then
               break
             fi
+            echo -e "\033[36mBad Asset. Continuing...\033[0m"
             rm -rf ~/.wabt
           done
           if ! ~/.wabt/bin/wat2wasm --version >/dev/null 2>&1; then
+            echo -e "\033[36mOut of Assets!\033[0m"
             exit 1
           fi
         fi
@@ -92,5 +103,6 @@ runs:
       shell: bash
       run: |
         set -e
+        echo -e "\033[36mls ~/.wabt/bin\033[0m"
         ls ~/.wabt/bin
         echo "$(cd ~/.wabt/bin && pwd -W 2>/dev/null || pwd)" >> "$GITHUB_PATH"
