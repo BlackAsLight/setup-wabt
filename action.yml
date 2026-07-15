@@ -6,74 +6,86 @@ branding:
 inputs:
   version:
     description: "Version to Install"
+    required: false
     default: "latest"
+  cache:
+    description: "Whether to use Caching"
+    required: false
+    default: "true"
+outputs:
+  bin-path:
+    description: "Path to WABT Binaries"
+    value: ~/.wabt
 runs:
   using: "composite"
   steps:
-    - name: Setup WABT
+    - name: Locate Source
+      id: source
       shell: bash
       run: |
         set -e
-        VERSION="${{ inputs.version }}"
-        TEMP=$(mktemp -d)
+        VERSION=${{ inputs.version }}
 
         if [ "$VERSION" = 'canary' ]; then
-          echo -e "\033[36mCloning Source to $TEMP/wabt\033[0m"
-          gh repo clone WebAssembly/wabt "$TEMP/wabt" -- --recurse-submodules
-
-          echo -e "\033[36mBuilding...\033[0m"
-          cmake \
-            -S "$TEMP/wabt" \
-            -B "$TEMP/wabt/build" \
-            -DCMAKE_INSTALL_PREFIX="$TEMP" \
-            -DCMAKE_BUILD_TYPE=RELEASE
-          cmake --build "$TEMP/wabt/build" --config RELEASE --target install
-
-          echo -e "\033[36mCleaning Up...\033[0m"
-          rm -rf "$TEMP/wabt"
+          SHA=$(gh api repos/WebAssembly/wabt/commits --jq '.[0].sha')
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "key=${{ runner.os }}-$SHA" >> "$GITHUB_OUTPUT"
         else
           if [ "$VERSION" = 'latest' ]; then
-            echo -e "\033[36mFetching Versions...\033[0m"
-            VERSION=$(gh release view \
-              --repo WebAssembly/wabt \
-              --json tagName \
-              -q .tagName)
-            echo -e "\033[36mLatest Version: $VERSION\033[0m"
-          else
-            echo -e "\033[36mProvided Version: $VERSION\033[0m"
+            VERSION=$(gh api repos/WebAssembly/wabt/releases/latest \
+              --jq '.name')
           fi
+          echo "key=${{ runner.os }}-$VERSION" >> "$GITHUB_OUTPUT"
+        fi
+        echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+    - name: Load Cache
+      id: cache
+      if: inputs.cache == 'true'
+      uses: actions/cache@v4
+      with:
+        path: ~/.wabt
+        key: ${{ steps.source.outputs.key }}
+    - name: Setup WABT
+      if: inputs.cache != 'true' || steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        set -e
+        VERSION=${{ steps.source.outputs.version }}
 
-          for ASSET in $(gh release view $VERSION \
-            --repo WebAssembly/wabt \
-            --json assets \
-            -q '.assets[].name | select(test("\\.tar\\.gz$"))');
+        if [ "$VERSION" = 'canary' ]; then
+          gh repo clone WebAssembly/wabt ~/.wabt/temp -- --recurse-submodules
+          git -C ~/.wabt/temp checkout ${{ steps.source.outputs.sha }}
+
+          cmake \
+            -S ~/.wabt/temp \
+            -B ~/.wabt/temp/build \
+            -DCMAKE_INSTALL_PREFIX="$HOME/.wabt" \
+            -DCMAKE_BUILD_TYPE=RELEASE
+          cmake --build ~/.wabt/temp/build --config RELEASE --target install
+
+          rm -rf ~/.wabt/temp
+        else
+          for ASSET in $(gh api repos/WebAssembly/wabt/releases/tags/$VERSION \
+            --jq '.assets.[].name | select(test("\\.tar\\.gz$"))');
           do
-            echo -e "\033[36mFound: $ASSET\033[0m"
-            mkdir "$TEMP/wabt"
+            mkdir ~/.wabt
             gh release download $VERSION \
               --repo WebAssembly/wabt \
-              --pattern $ASSET \
-              -O - \
-              | tar -xzC $TEMP/wabt --strip-components=1
+              --pattern "$ASSET" \
+              -O - | tar -xzC ~/.wabt --strip-components=1
 
-            if "$TEMP/wabt/bin/wat2wasm" --version >/dev/null 2>&1; then
+            if ~/.wabt/bin/wat2wasm --version >/dev/null 2>&1; then
               break
             fi
-            echo -e "\033[36mBad Find\033[0m"
-            rm -rf "$TEMP/wabt"
+            rm -rf ~/.wabt
           done
-          if ! "$TEMP/wabt/bin/wat2wasm" --version >/dev/null 2>&1; then
-            echo -e "\033[36mNo Assets Work!\033[0m"
+          if ! ~/.wabt/bin/wat2wasm --version >/dev/null 2>&1; then
             exit 1
           fi
-
-          echo -e "\033[36mCleaning Up...\033[0m"
-          mv $TEMP/wabt/* "$TEMP/"
-          rm -rf "$TEMP/wabt"
         fi
-
-        echo -e "\033[36mls $TEMP/bin\033[0m"
-        ls "$TEMP/bin"
-
-        echo -e "\033[36mAdding $TEMP/bin to PATH\033[0m"
-        echo -e "$(cd "$TEMP/bin" && pwd -W 2>/dev/null || pwd)" >> $GITHUB_PATH
+    - name: Add Path
+      shell: bash
+      run: |
+        set -e
+        ls ~/.wabt/bin
+        echo "$(cd ~/.wabt/bin && pwd -W 2>/dev/null || pwd)" >> "$GITHUB_PATH"
