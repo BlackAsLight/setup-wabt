@@ -41,7 +41,7 @@ runs:
     - name: Load Cache
       id: cache
       if: inputs.cache == 'true'
-      uses: actions/cache@v4
+      uses: actions/cache/restore@v4
       with:
         path: ~/.wabt
         key: ${{ steps.source.outputs.key }}
@@ -83,6 +83,11 @@ runs:
             exit 1
           fi
         fi
+    - name: Save Cache
+      uses: actions/cache/save@v4
+      with:
+        path: ~/.wabt
+        key: ${{ steps.source.outputs.key }}
     - name: Add Path
       shell: bash
       run: |
