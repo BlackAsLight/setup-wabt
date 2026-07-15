@@ -1,14 +1,18 @@
 # Setup WebAssembly Binary Toolkit
 
 ## Example
+
 ```yaml
-- uses: BlackAsLight/setup-wabt@v2.0.0
+- uses: BlackAsLight/setup-wabt@v2.1.0
   env:
     GH_TOKEN: ${{ github.token }}
   with:
     # Version can be one of:
-    # - "canary": Clones the WABT repo and builds from source.
-    # - "latest": (Default) Downloads the latest release binaries from GitHub Releases.
-    # - A specific release tag (e.g., "1.0.36"): downloads that exact version's binaries.
+    # - "latest" (default): Download the latest GitHub Release binaries.
+    # - "canary": Build WABT from the latest source.
+    # - A specific release tag (for example, "1.0.36"): Download that release's binaries.
     version: 1.0.36
+
+    # Whether to save time by using actions/cache. Defaults to true.
+    cache: true
 ```
