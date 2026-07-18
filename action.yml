@@ -45,7 +45,7 @@ runs:
     - name: Restore Cache
       id: cache
       if: inputs.cache == 'true'
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v5
       with:
         path: ~/.wabt
         key: ${{ steps.source.outputs.key }}
@@ -96,7 +96,7 @@ runs:
         fi
     - name: Save Cache
       if: steps.cache.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@v5
       with:
         path: ~/.wabt
         key: ${{ steps.source.outputs.key }}
