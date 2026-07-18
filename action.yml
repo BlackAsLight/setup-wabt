@@ -95,6 +95,7 @@ runs:
           fi
         fi
     - name: Save Cache
+      if: steps.cache.outputs.cache-hit != 'true'
       uses: actions/cache/save@v4
       with:
         path: ~/.wabt
